@@ -15,7 +15,8 @@ namespace FILEWATCHER
         public static StringBuilder _sb = null;
         public static Dictionary<string, string> dic_cmd = new Dictionary<string, string>();
         public static Logger logger = new Logger();
-
+        public static string _watchFolder = string.Empty;
+        public static string[] _destination;
         //private string _msg = string.Empty;
 
         //public string Msg
@@ -44,7 +45,7 @@ namespace FILEWATCHER
         /// <summary>
         /// 監看開始
         /// </summary>
-        public void StartWatch(string watchFolder)
+        public void StartWatch(string watchFolder, string[] destination)
         {
             if (string.Empty.Equals(watchFolder) || !Directory.Exists(watchFolder.Trim()))
             {
@@ -52,6 +53,8 @@ namespace FILEWATCHER
             }
             else
             {
+                _watchFolder = watchFolder;
+                _destination = destination;
                 logger.ExePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 _sb = new StringBuilder();
                 //_sb.AppendLine("::Watch the path");
@@ -80,8 +83,8 @@ namespace FILEWATCHER
                 _fileWatcher.EnableRaisingEvents = true;
                 _dirWatcher.EnableRaisingEvents = true;
 
-                //_sb.AppendLine("chcp 65001");
-                //_sb.AppendLine($"cd /d  {watchFolder}");
+                _sb.AppendLine("chcp 65001");
+                _sb.AppendLine($"cd /d  {watchFolder}");
             }
         }
 
@@ -106,58 +109,28 @@ namespace FILEWATCHER
         }
 
         /// <summary>
-        /// 匯出
-        /// </summary>
-        public void Export(string[] arr, string watchPath)
-        {
-            if (arr.Length == 0)
-                ToBatch.MAKE(_sb);
-            else
-            {
-                StringBuilder _nsb = new StringBuilder();
-                //string _bsb = _sb.ToString();
-                string[] _bsbArr = _sb.ToString().Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-                //string[] sbArr = _sb.ToString().Split(new string[] { System.Environment.NewLine }, StringSplitOptions.None);
-                for (int i = 0; i < arr.Length; i++)
-                {
-                    //_bsb.Replace(watchPath, arr[i] + "\\:");
-                    for (int a = 0; a < _bsbArr.Length; a++)
-                    {
-                        if (_bsbArr[a].StartsWith("robocopy"))
-                            _nsb.AppendLine(_bsbArr[a].Replace("[TargetPath]", arr[i]));
-                        else
-                            _nsb.AppendLine(_bsbArr[a].Replace(watchPath, arr[i]));
-                    }
-                    //_nsb.Append(_bsb.Replace(watchPath, arr[i]));
-                }
-
-                ToBatch.MAKE(_nsb);
-            }
-        }
-
-        /// <summary>
         /// 模仿動作
         /// </summary>
-        public string Replicate(string[] arr, string watchPath)
+        public string Replicate()
         {
             //Export(arr, watchPath);
             StringBuilder _nsb = new StringBuilder();
             string back = string.Empty;
 
-            if (arr.Length == 0)
+            if (_destination == null || _destination.Length == 0)
                 _nsb = _sb;
             else
             {
                 //string _bsb = _sb.ToString();
                 string[] _bsbArr = _sb.ToString().Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-                for (int i = 0; i < arr.Length; i++)
+                for (int i = 0; i < _destination.Length; i++)
                 {
                     for (int a = 0; a < _bsbArr.Length; a++)
                     {
                         if (_bsbArr[a].StartsWith("robocopy"))
-                            _nsb.AppendLine(_bsbArr[a].Replace("[TargetPath]", arr[i]));
+                            _nsb.AppendLine(_bsbArr[a].Replace("[TargetPath]", _destination[i].Trim()));
                         else
-                            _nsb.AppendLine(_bsbArr[a].Replace(watchPath, arr[i]));
+                            _nsb.AppendLine(_bsbArr[a].Replace(_watchFolder, _destination[i].Trim()));
                     }
                     //_nsb.Append(_bsb.Replace(watchPath, arr[i]));
                 }
@@ -191,7 +164,7 @@ namespace FILEWATCHER
                     //returnCode = p.ExitCode;
                     Thread.Sleep(250);
 
-                    if (!string.IsNullOrEmpty(errMsg))
+                    if (!string.IsNullOrWhiteSpace(errMsg))
                     {
                         StringBuilder sb = new StringBuilder();
                         sb.AppendLine($"ERR LINE : {rowNum}");
@@ -207,6 +180,8 @@ namespace FILEWATCHER
                 }
             }
             _sb.Clear();
+            //var objj = (Form1)Application.OpenForms["Form1"];
+            //objj.TB_RESULT.Text = back;
             return back;
         }
 
@@ -253,53 +228,66 @@ namespace FILEWATCHER
         /// <summary>
         /// 當所監看的資料夾有建立文字檔時觸發
         /// </summary>
-        private static void _Watch_Created(object sender, FileSystemEventArgs e)
+        private void _Watch_Created(object sender, FileSystemEventArgs e)
         {
-            var sb = new StringBuilder();
-            var dirInfo = new DirectoryInfo(e.FullPath);
-
-
-            sb.AppendLine($"新建檔案於：{dirInfo.FullName.Replace(dirInfo.Name, string.Empty)}");
-            sb.AppendLine($"新建檔案名稱：{dirInfo.Name}");
-            sb.AppendLine($"建立時間：{dirInfo.CreationTime}");
-            //sb.AppendLine($"存取時間：{dirInfo.LastAccessTime}");
-            //sb.AppendLine($"目錄下共有：{dirInfo.Parent?.GetFiles().Length} 檔案");
-            //sb.AppendLine($"目錄下共有：{dirInfo.Parent?.GetDirectories().Length} 資料夾");
-            //Console.WriteLine(sb.ToString());
-            logger.Append(sb.ToString());
-
-            if (sender == _dirWatcher)
+            try
             {
-                if (dic_cmd.ContainsKey(dirInfo.Name))
+                _fileWatcher.EnableRaisingEvents = false;
+                _dirWatcher.EnableRaisingEvents = false;
+                /* do my stuff once asynchronously */
+
+                var sb = new StringBuilder();
+                var dirInfo = new DirectoryInfo(e.FullPath);
+
+
+                sb.AppendLine($"新建檔案於：{dirInfo.FullName.Replace(dirInfo.Name, string.Empty)}");
+                sb.AppendLine($"新建檔案名稱：{dirInfo.Name}");
+                sb.AppendLine($"建立時間：{dirInfo.CreationTime}");
+                //sb.AppendLine($"存取時間：{dirInfo.LastAccessTime}");
+                //sb.AppendLine($"目錄下共有：{dirInfo.Parent?.GetFiles().Length} 檔案");
+                //sb.AppendLine($"目錄下共有：{dirInfo.Parent?.GetDirectories().Length} 資料夾");
+                //Console.WriteLine(sb.ToString());
+                logger.Append(sb.ToString());
+
+                if (sender == _dirWatcher)
                 {
-                    string cmd = dic_cmd[dirInfo.Name].Replace("rmdir", "move") + " " + "\"" + dirInfo.FullName + "\"";
-                    _sb.Replace(dic_cmd[dirInfo.Name], cmd);
-                    dic_cmd.Remove(dirInfo.Name);
+                    if (dic_cmd.ContainsKey(dirInfo.Name))
+                    {
+                        string cmd = dic_cmd[dirInfo.Name].Replace("rmdir", "move") + " " + "\"" + dirInfo.FullName + "\"";
+                        _sb.Replace(dic_cmd[dirInfo.Name], cmd);
+                        dic_cmd.Remove(dirInfo.Name);
+                    }
+                    else
+                        _sb.AppendLine($"mkdir \"{dirInfo.FullName}\"");
                 }
-                else
-                    _sb.AppendLine($"mkdir \"{dirInfo.FullName}\"");
-            }
-            else if (sender == _fileWatcher)
-            {
-                string s = $"{dirInfo.FullName.Replace('\\' + dirInfo.Name, string.Empty)}";
-                var objj = (Form1)Application.OpenForms["Form1"];
-                string watchPath = objj.M_TEXTBOX.Text;
-                string t = s.Replace(watchPath, "[TargetPath]");
+                else if (sender == _fileWatcher)
+                {
+                    string s = $"{dirInfo.FullName.Replace('\\' + dirInfo.Name, string.Empty)}";
+                    //var objj = (Form1)Application.OpenForms["Form1"];
+                    //string watchPath = objj.M_TEXTBOX.Text.Trim();
+                    string t = s.Replace(_watchFolder, "[TargetPath]");
+                    if (dic_cmd.ContainsKey(dirInfo.Name))
+                    {
+                        string cmd = dic_cmd[dirInfo.Name].Replace("del", "move") + " " + "\"" + dirInfo.FullName + "\"";
+                        _sb.Replace(dic_cmd[dirInfo.Name], cmd);
+                        dic_cmd.Remove(dirInfo.Name);
+                    }
+                    else
+                        _sb.AppendLine($"robocopy {s} {t} {dirInfo.Name} /NP /NFL /MT:32");
 
-                _sb.AppendLine($"robocopy {s} {t} {dirInfo.Name} /MT");
-                //if (dic_cmd.ContainsKey(dirInfo.Name))
-                //{
-                //    string cmd = dic_cmd[dirInfo.Name].Replace("del", "move") + " " + "\"" + dirInfo.FullName + "\"";
-                //    _sb.Replace(dic_cmd[dirInfo.Name], cmd);
-                //    dic_cmd.Remove(dirInfo.Name);
-                //}
+                }
+            }
+            finally
+            {
+                _fileWatcher.EnableRaisingEvents = true;
+                _dirWatcher.EnableRaisingEvents = true;
             }
         }
 
         /// <summary>
         /// 當所監看的資料夾有文字檔檔案內容有異動時觸發
         /// </summary>
-        private static void _Watch_Changed(object sender, FileSystemEventArgs e)
+        private void _Watch_Changed(object sender, FileSystemEventArgs e)
         {
             //var sb = new StringBuilder();
             var dirInfo = new DirectoryInfo(e.FullPath);
@@ -321,17 +309,17 @@ namespace FILEWATCHER
                 {
                     string s = $"{dirInfo.FullName.Replace('\\' + dirInfo.Name, string.Empty)}";
                     var objj = (Form1)Application.OpenForms["Form1"];
-                    string watchPath = objj.M_TEXTBOX.Text;
-                    string t =  s.Replace(watchPath,"[TargetPath]");
-                    
-                    _sb.AppendLine($"robocopy {s} {t} {dirInfo.Name} /MT");
+                    string watchPath = objj.M_TEXTBOX.Text.Trim();
+                    string t = s.Replace(watchPath, "[TargetPath]");
+
+                    _sb.AppendLine($"robocopy {s} {t} {dirInfo.Name} /NP /NFL /MT:32");
                 }
             }
         }
         /// <summary>
         /// 當所監看的資料夾有文字檔檔案重新命名時觸發
         /// </summary>
-        private static void _Watch_Renamed(object sender, RenamedEventArgs e)
+        private void _Watch_Renamed(object sender, RenamedEventArgs e)
         {
             var sb = new StringBuilder();
             var fileInfo = new FileInfo(e.FullPath);
@@ -350,13 +338,12 @@ namespace FILEWATCHER
             {
                 _sb.AppendLine($"rename \"{e.OldFullPath}\" \"{System.IO.Path.GetFileName(e.FullPath)}\"");
             }
-
         }
 
         /// <summary>
         /// 當所監看的資料夾有文字檔檔案有被刪除時觸發
         /// </summary>
-        private static void _Watch_Deleted(object sender, FileSystemEventArgs e)
+        private void _Watch_Deleted(object sender, FileSystemEventArgs e)
         {
             var sb = new StringBuilder();
             var dirInfo = new DirectoryInfo(e.FullPath);
@@ -375,8 +362,11 @@ namespace FILEWATCHER
             }
             else if (sender == _fileWatcher)
             {
-                _sb.AppendLine($"del \"{e.FullPath}\"");
-                dic_cmd.Add(System.IO.Path.GetFileName(e.FullPath), $"del \"{e.FullPath}\"");
+                if (!dic_cmd.ContainsKey(System.IO.Path.GetFileName(e.FullPath)))
+                {
+                    _sb.AppendLine($"del \"{e.FullPath}\"");
+                    dic_cmd.Add(System.IO.Path.GetFileName(e.FullPath), $"del \"{e.FullPath}\"");
+                }
             }
         }
     }

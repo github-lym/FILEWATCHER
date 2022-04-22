@@ -58,7 +58,6 @@
     <Compile Include="Logger.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ToBatch.cs" />
     <Compile Include="Watcher.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
@@ -71,6 +70,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -89,6 +89,9 @@
     <Content Include="open-eye-with-shine.ico" />
     <Content Include="open_eye_with_shine_CKw_icon.ico" />
     <Content Include="Paomedia-Small-N-Flat-Sign-sync.ico" />
+    <None Include="Resources\watch2.gif" />
+    <None Include="Resources\watch1.gif" />
+    <None Include="Resources\watch.gif" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
