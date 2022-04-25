@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -41,6 +43,21 @@ namespace FILEWATCHER
         //        EnableRaisingEvents = true
         //    };
         //}
+
+        /// <summary>
+        /// 啟動
+        /// </summary>
+        public static void StartApp()
+        {
+            System.Diagnostics.Process p = new System.Diagnostics.Process();
+            p.StartInfo.FileName = "cmd.exe";
+            p.StartInfo.UseShellExecute = false;
+            p.StartInfo.RedirectStandardInput = true;
+            p.StartInfo.RedirectStandardOutput = true;
+            p.StartInfo.RedirectStandardError = true;
+            p.StartInfo.Arguments = $"/c chcp 65001";
+            p.Start();
+        }
 
         /// <summary>
         /// 監看開始
@@ -83,7 +100,7 @@ namespace FILEWATCHER
                 _fileWatcher.EnableRaisingEvents = true;
                 _dirWatcher.EnableRaisingEvents = true;
 
-                _sb.AppendLine("chcp 65001");
+                //_sb.AppendLine("chcp 65001");
                 _sb.AppendLine($"cd /d  {watchFolder}");
             }
         }
@@ -122,7 +139,7 @@ namespace FILEWATCHER
             else
             {
                 //string _bsb = _sb.ToString();
-                string[] _bsbArr = _sb.ToString().Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+                string[] _bsbArr = _sb.ToString().Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).Distinct().ToArray();
                 for (int i = 0; i < _destination.Length; i++)
                 {
                     for (int a = 0; a < _bsbArr.Length; a++)
@@ -232,8 +249,8 @@ namespace FILEWATCHER
         {
             try
             {
-                _fileWatcher.EnableRaisingEvents = false;
-                _dirWatcher.EnableRaisingEvents = false;
+                //_fileWatcher.EnableRaisingEvents = false;
+                //_dirWatcher.EnableRaisingEvents = false;
                 /* do my stuff once asynchronously */
 
                 var sb = new StringBuilder();
@@ -273,14 +290,21 @@ namespace FILEWATCHER
                         dic_cmd.Remove(dirInfo.Name);
                     }
                     else
-                        _sb.AppendLine($"robocopy {s} {t} {dirInfo.Name} /NP /NFL /MT:32");
+                    {
+                        string add = $"robocopy {s} {t} {dirInfo.Name} /NP /NFL /MT:32";
 
+                        //var _sbNow = _sb.ToString().Split('\n');
+                        //var last = _sbNow.LastOrDefault();
+                        //var secondLast = _sbNow.Skip(_sbNow.Length - 2).FirstOrDefault();
+                        //if (string.Compare(secondLast, add) != 0)
+                        _sb.AppendLine(add);
+                    }
                 }
             }
             finally
             {
-                _fileWatcher.EnableRaisingEvents = true;
-                _dirWatcher.EnableRaisingEvents = true;
+                //_fileWatcher.EnableRaisingEvents = true;
+                //_dirWatcher.EnableRaisingEvents = true;
             }
         }
 
@@ -311,8 +335,13 @@ namespace FILEWATCHER
                     var objj = (Form1)Application.OpenForms["Form1"];
                     string watchPath = objj.M_TEXTBOX.Text.Trim();
                     string t = s.Replace(watchPath, "[TargetPath]");
+                    string add = $"robocopy {s} {t} {dirInfo.Name} /NP /NFL /MT:32";
 
-                    _sb.AppendLine($"robocopy {s} {t} {dirInfo.Name} /NP /NFL /MT:32");
+                    //var _sbNow = _sb.ToString().Split('\n');
+                    //var last = _sbNow.LastOrDefault();
+                    //var secondLast = _sbNow.Skip(_sbNow.Length - 2).FirstOrDefault();
+                    //if (string.Compare(secondLast, add) != 0)
+                    _sb.AppendLine(add);
                 }
             }
         }

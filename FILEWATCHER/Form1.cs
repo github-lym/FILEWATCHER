@@ -13,6 +13,7 @@ namespace FILEWATCHER
         public Form1()
         {
             InitializeComponent();
+            Watcher.StartApp();
             Watching_PictureBox.Visible = false;
         }
 
