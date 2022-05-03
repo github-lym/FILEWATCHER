@@ -1,10 +1,12 @@
-﻿using System;
+﻿using NLog;
+using NLog.Config;
+using NLog.Targets;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -16,7 +18,8 @@ namespace FILEWATCHER
         public static FileSystemWatcher _dirWatcher = null;
         public static StringBuilder _sb = null;
         public static Dictionary<string, string> dic_cmd = new Dictionary<string, string>();
-        public static Logger logger = new Logger();
+        //public static Logger logger = new Logger();
+        public static Logger logger;
         public static string _watchFolder = string.Empty;
         public static string[] _destination;
         //private string _msg = string.Empty;
@@ -44,19 +47,48 @@ namespace FILEWATCHER
         //    };
         //}
 
+
+        /// <summary>
+        /// 初始化log
+        /// </summary>
+        private static void CreateLogger()
+        {
+            var config = new LoggingConfiguration();
+
+            var fileTarget = new FileTarget
+            {
+                FileName = "${basedir}/${date:format=yyyyMM}/${shortdate}.log",
+                Layout = "${date:format=yyyy-MM-dd HH\\:mm\\:ss} [${uppercase:${level}}] ${message}",
+                Encoding = Encoding.UTF8,
+            };
+            config.AddRule(LogLevel.Trace, LogLevel.Fatal, fileTarget);
+            LogManager.Configuration = config;
+        }
+
         /// <summary>
         /// 啟動
         /// </summary>
         public static void StartApp()
         {
-            System.Diagnostics.Process p = new System.Diagnostics.Process();
-            p.StartInfo.FileName = "cmd.exe";
-            p.StartInfo.UseShellExecute = false;
-            p.StartInfo.RedirectStandardInput = true;
-            p.StartInfo.RedirectStandardOutput = true;
-            p.StartInfo.RedirectStandardError = true;
-            p.StartInfo.Arguments = $"/c chcp 65001";
-            p.Start();
+            try
+            {
+                System.Diagnostics.Process p = new System.Diagnostics.Process();
+                p.StartInfo.FileName = "cmd.exe";
+                p.StartInfo.UseShellExecute = false;
+                p.StartInfo.RedirectStandardInput = true;
+                p.StartInfo.RedirectStandardOutput = true;
+                p.StartInfo.RedirectStandardError = true;
+                p.StartInfo.Arguments = $"/c chcp 65001";
+                p.Start();
+
+                CreateLogger();
+                logger = LogManager.GetCurrentClassLogger();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"{ex}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -64,44 +96,52 @@ namespace FILEWATCHER
         /// </summary>
         public void StartWatch(string watchFolder, string[] destination)
         {
-            if (string.Empty.Equals(watchFolder) || !Directory.Exists(watchFolder.Trim()))
+            try
             {
-                System.Windows.Forms.MessageBox.Show("請檢查路徑");
+                if (string.Empty.Equals(watchFolder) || !Directory.Exists(watchFolder.Trim()))
+                {
+                    System.Windows.Forms.MessageBox.Show("請檢查路徑");
+                }
+                else
+                {
+                    _watchFolder = watchFolder;
+                    _destination = destination;
+                    //logger.ExePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                    _sb = new StringBuilder();
+                    //_sb.AppendLine("::Watch the path");
+
+                    _fileWatcher = new FileSystemWatcher();
+                    _dirWatcher = new FileSystemWatcher();
+
+                    //設定要監看的資料夾
+                    _fileWatcher.Path = watchFolder;
+                    _dirWatcher.Path = watchFolder;
+
+                    // 設定要監看的變更類型
+                    //fileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
+                    _fileWatcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.Size;
+                    _dirWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.DirectoryName;
+
+                    // 設定要監看的檔案類型
+                    _fileWatcher.Filter = "*.*";
+                    _dirWatcher.Filter = "*.*";
+
+                    // 設定是否監看子資料夾
+                    _fileWatcher.IncludeSubdirectories = true;
+                    _dirWatcher.IncludeSubdirectories = true;
+
+                    // 設定是否啟動元件，必須要設定為 true，否則事件是不會被觸發
+                    _fileWatcher.EnableRaisingEvents = true;
+                    _dirWatcher.EnableRaisingEvents = true;
+
+                    //_sb.AppendLine("chcp 65001");
+                    _sb.AppendLine($"cd /d  {watchFolder}");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                _watchFolder = watchFolder;
-                _destination = destination;
-                logger.ExePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                _sb = new StringBuilder();
-                //_sb.AppendLine("::Watch the path");
-
-                _fileWatcher = new FileSystemWatcher();
-                _dirWatcher = new FileSystemWatcher();
-
-                //設定要監看的資料夾
-                _fileWatcher.Path = watchFolder;
-                _dirWatcher.Path = watchFolder;
-
-                // 設定要監看的變更類型
-                //fileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.DirectoryName;
-                _fileWatcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.Size;
-                _dirWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.DirectoryName;
-
-                // 設定要監看的檔案類型
-                _fileWatcher.Filter = "*.*";
-                _dirWatcher.Filter = "*.*";
-
-                // 設定是否監看子資料夾
-                _fileWatcher.IncludeSubdirectories = true;
-                _dirWatcher.IncludeSubdirectories = true;
-
-                // 設定是否啟動元件，必須要設定為 true，否則事件是不會被觸發
-                _fileWatcher.EnableRaisingEvents = true;
-                _dirWatcher.EnableRaisingEvents = true;
-
-                //_sb.AppendLine("chcp 65001");
-                _sb.AppendLine($"cd /d  {watchFolder}");
+                logger.Fatal(ex.ToString());
+                throw;
             }
         }
 
@@ -130,75 +170,105 @@ namespace FILEWATCHER
         /// </summary>
         public string Replicate()
         {
-            //Export(arr, watchPath);
-            StringBuilder _nsb = new StringBuilder();
             string back = string.Empty;
 
-            if (_destination == null || _destination.Length == 0)
-                _nsb = _sb;
-            else
+            try
             {
-                //string _bsb = _sb.ToString();
-                string[] _bsbArr = _sb.ToString().Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).Distinct().ToArray();
-                for (int i = 0; i < _destination.Length; i++)
+                //Export(arr, watchPath);
+                StringBuilder _nsb = new StringBuilder();
+
+                if (_destination == null || _destination.Length == 0)
+                    _nsb = _sb;
+                else
                 {
-                    for (int a = 0; a < _bsbArr.Length; a++)
+                    //string _bsb = _sb.ToString();
+                    string[] _bsbArr = _sb.ToString().Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries).Distinct().ToArray();
+                    for (int i = 0; i < _destination.Length; i++)
                     {
-                        if (_bsbArr[a].StartsWith("robocopy"))
-                            _nsb.AppendLine(_bsbArr[a].Replace("[TargetPath]", _destination[i].Trim()));
-                        else
-                            _nsb.AppendLine(_bsbArr[a].Replace(_watchFolder, _destination[i].Trim()));
+                        for (int a = 0; a < _bsbArr.Length; a++)
+                        {
+                            if (_bsbArr[a].StartsWith("robocopy"))
+                                _nsb.AppendLine(_bsbArr[a].Replace("[TargetPath]", _destination[i].Trim()));
+                            else
+                                _nsb.AppendLine(_bsbArr[a].Replace(_watchFolder, _destination[i].Trim()));
+                        }
+                        //_nsb.Append(_bsb.Replace(watchPath, arr[i]));
                     }
-                    //_nsb.Append(_bsb.Replace(watchPath, arr[i]));
                 }
-            }
 
-            using (StringReader SR = new StringReader(_nsb.ToString()))
-            {
-                System.Diagnostics.Process p = new System.Diagnostics.Process();
-                p.StartInfo.FileName = "cmd.exe";
-                p.StartInfo.UseShellExecute = false;
-                p.StartInfo.RedirectStandardInput = true;
-                p.StartInfo.RedirectStandardOutput = true;
-                p.StartInfo.RedirectStandardError = true;
-                p.StartInfo.CreateNoWindow = true;
-                string errMsg = string.Empty;
+                using (StringReader SR = new StringReader(_nsb.ToString()))
+                {
+                    System.Diagnostics.Process p = new System.Diagnostics.Process();
+                    p.StartInfo.FileName = "cmd.exe";
+                    p.StartInfo.UseShellExecute = false;
+                    p.StartInfo.RedirectStandardInput = true;
+                    p.StartInfo.RedirectStandardOutput = true;
+                    p.StartInfo.RedirectStandardError = true;
+                    p.StartInfo.CreateNoWindow = true;
+                    string errMsg = string.Empty;
 
-                string line = string.Empty;
-                int rowNum = 0;
+                    string line = string.Empty;
+                    int rowNum = 0;
+                    //var objj = (Form1)Application.OpenForms["Form1"];
+                    while ((line = SR.ReadLine()) != null)
+                    {
+                        //TB_RESULT.Text += line + Environment.NewLine;
+                        //Application.DoEvents();
+                        if (line.StartsWith("del"))
+                        {
+                            string file = line.Replace("del", "").Replace(@"""", "").Trim();
+                            if (!File.Exists(file))
+                            {
+                                back += file + " 已不存在!" + Environment.NewLine;
+                                continue;
+                            }
+                        }
+                        //if (line.StartsWith("rmdir /S"))
+                        //{
+                        //    string folder = line.Replace("rmdir /S", "").Replace(@"""", "").Trim();
+                        //    if (!Directory.Exists(folder))
+                        //    {
+                        //        back += folder + " 已不存在!" + Environment.NewLine;
+                        //        continue;
+                        //    }
+                        //}
+
+                        back += line + Environment.NewLine;
+
+                        rowNum++;
+                        p.StartInfo.Arguments = $"/c {line}";
+                        p.Start();
+                        errMsg = p.StandardError.ReadToEnd();
+                        //returnCode = p.ExitCode;
+                        Form1.ActiveForm.Refresh();
+                        Thread.Sleep(100);
+
+                        if (!string.IsNullOrWhiteSpace(errMsg))
+                        {
+                            StringBuilder sb = new StringBuilder();
+                            sb.AppendLine($"ERR LINE : {rowNum}");
+                            sb.AppendLine(errMsg);
+
+                            back += errMsg + Environment.NewLine;
+                            //MessageBox.Show(sb.ToString());
+                            MessageBox.Show(sb.ToString());
+                            break;
+                        }
+
+                        //objj.TB_RESULT.Refresh();
+                    }
+                }
+                _sb.Clear();
                 //var objj = (Form1)Application.OpenForms["Form1"];
-                while ((line = SR.ReadLine()) != null)
-                {
-                    //TB_RESULT.Text += line + Environment.NewLine;
-                    //Application.DoEvents();
-
-                    back += line + Environment.NewLine;
-
-                    rowNum++;
-                    p.StartInfo.Arguments = $"/c {line}";
-                    p.Start();
-                    errMsg = p.StandardError.ReadToEnd();
-                    //returnCode = p.ExitCode;
-                    Thread.Sleep(250);
-
-                    if (!string.IsNullOrWhiteSpace(errMsg))
-                    {
-                        StringBuilder sb = new StringBuilder();
-                        sb.AppendLine($"ERR LINE : {rowNum}");
-                        sb.AppendLine(errMsg);
-
-                        back += errMsg + Environment.NewLine;
-                        //MessageBox.Show(sb.ToString());
-                        MessageBox.Show(sb.ToString());
-                        break;
-                    }
-
-                    //objj.TB_RESULT.Refresh();
-                }
+                //objj.TB_RESULT.Text = back;
             }
-            _sb.Clear();
-            //var objj = (Form1)Application.OpenForms["Form1"];
-            //objj.TB_RESULT.Text = back;
+            catch (Exception ex)
+            {
+                logger.Fatal(ex.ToString());
+                MessageBox.Show(ex.ToString());
+                throw;
+            }
+
             return back;
         }
 
@@ -264,7 +334,7 @@ namespace FILEWATCHER
                 //sb.AppendLine($"目錄下共有：{dirInfo.Parent?.GetFiles().Length} 檔案");
                 //sb.AppendLine($"目錄下共有：{dirInfo.Parent?.GetDirectories().Length} 資料夾");
                 //Console.WriteLine(sb.ToString());
-                logger.Append(sb.ToString());
+                logger.Info(sb.ToString());
 
                 if (sender == _dirWatcher)
                 {
@@ -357,7 +427,7 @@ namespace FILEWATCHER
             sb.AppendLine($"檔名更新後路徑：{e.FullPath}");
             sb.AppendLine($"建立時間：{fileInfo.LastAccessTime}");
             //Console.WriteLine(sb.ToString());
-            logger.Append(sb.ToString());
+            logger.Info(sb.ToString());
 
             if (sender == _dirWatcher)
             {
@@ -374,29 +444,39 @@ namespace FILEWATCHER
         /// </summary>
         private void _Watch_Deleted(object sender, FileSystemEventArgs e)
         {
-            var sb = new StringBuilder();
-            var dirInfo = new DirectoryInfo(e.FullPath);
-
-            sb.AppendLine($"被刪除的檔名為：{dirInfo.Name}");
-            sb.AppendLine($"檔案路徑為：{dirInfo.FullName.Replace(dirInfo.Name, string.Empty)}");
-            //sb.AppendLine($"被刪除的檔案為：{e.FullPath}");
-            sb.AppendLine($"刪除時間：{DateTime.Now}");
-            //Console.WriteLine(sb.ToString());
-            logger.Append(sb.ToString());
-
-            if (sender == _dirWatcher)
+            try
             {
-                _sb.AppendLine($"rmdir \"{e.FullPath}\"");
-                dic_cmd.Add(((e.FullPath).Replace(System.IO.Path.GetDirectoryName(e.FullPath), "")).Replace("\\", ""), $"rmdir \"{e.FullPath}\"");
-            }
-            else if (sender == _fileWatcher)
-            {
-                if (!dic_cmd.ContainsKey(System.IO.Path.GetFileName(e.FullPath)))
+                var sb = new StringBuilder();
+                var dirInfo = new DirectoryInfo(e.FullPath);
+
+                sb.AppendLine($"被刪除的檔名為：{dirInfo.Name}");
+                sb.AppendLine($"檔案路徑為：{dirInfo.FullName.Replace(dirInfo.Name, string.Empty)}");
+                //sb.AppendLine($"被刪除的檔案為：{e.FullPath}");
+                sb.AppendLine($"刪除時間：{DateTime.Now}");
+                //Console.WriteLine(sb.ToString());
+                logger.Info(sb.ToString());
+
+                if (sender == _fileWatcher)
                 {
-                    _sb.AppendLine($"del \"{e.FullPath}\"");
-                    dic_cmd.Add(System.IO.Path.GetFileName(e.FullPath), $"del \"{e.FullPath}\"");
+                    if (!dic_cmd.ContainsKey(System.IO.Path.GetFileName(e.FullPath)))
+                    {
+                        _sb.AppendLine($"del \"{e.FullPath}\"");
+                        dic_cmd.Add(System.IO.Path.GetFileName(e.FullPath), $"del \"{e.FullPath}\"");
+                    }
+                }
+                else if (sender == _dirWatcher)
+                {
+                    _sb.AppendLine($"rmdir /S /Q \"{e.FullPath}\"");
+                    dic_cmd.Add(((e.FullPath).Replace(System.IO.Path.GetDirectoryName(e.FullPath), "")).Replace("\\", ""), $"rmdir /S \"{e.FullPath}\"");
                 }
             }
+            catch (Exception ex)
+            {
+                logger.Fatal(ex.ToString());
+                MessageBox.Show(ex.ToString());
+                throw;
+            }
+
         }
     }
 }
