@@ -63,7 +63,8 @@ namespace FILEWATCHER
 
         private void REPLICATE_BTN_Click(object sender, EventArgs e)
         {
-            TB_RESULT.Text = _watcher.Replicate();
+            //TB_RESULT.Text = _watcher.Replicate();
+            _watcher.Replicate();
         }
     }
 }

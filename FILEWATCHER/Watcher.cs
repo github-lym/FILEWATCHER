@@ -168,7 +168,7 @@ namespace FILEWATCHER
         /// <summary>
         /// 模仿動作
         /// </summary>
-        public string Replicate()
+        public void Replicate()
         {
             string back = string.Empty;
 
@@ -210,6 +210,8 @@ namespace FILEWATCHER
                     string line = string.Empty;
                     int rowNum = 0;
                     //var objj = (Form1)Application.OpenForms["Form1"];
+                    RichTextBox t = Application.OpenForms["Form1"].Controls["TB_RESULT"] as RichTextBox;
+
                     while ((line = SR.ReadLine()) != null)
                     {
                         //TB_RESULT.Text += line + Environment.NewLine;
@@ -219,7 +221,8 @@ namespace FILEWATCHER
                             string file = line.Replace("del", "").Replace(@"""", "").Trim();
                             if (!File.Exists(file))
                             {
-                                back += file + " 已不存在!" + Environment.NewLine;
+                                t.Text += file + " 已不存在!" + Environment.NewLine;
+                                //back += file + " 已不存在!" + Environment.NewLine;
                                 continue;
                             }
                         }
@@ -232,8 +235,9 @@ namespace FILEWATCHER
                         //        continue;
                         //    }
                         //}
-
-                        back += line + Environment.NewLine;
+                        
+                        t.Text += line + Environment.NewLine;
+                        //back += line + Environment.NewLine;
 
                         rowNum++;
                         p.StartInfo.Arguments = $"/c {line}";
@@ -249,7 +253,8 @@ namespace FILEWATCHER
                             sb.AppendLine($"ERR LINE : {rowNum}");
                             sb.AppendLine(errMsg);
 
-                            back += errMsg + Environment.NewLine;
+                            //back += errMsg + Environment.NewLine;
+                            t.Text += errMsg + Environment.NewLine;
                             //MessageBox.Show(sb.ToString());
                             MessageBox.Show(sb.ToString());
                             break;
@@ -269,7 +274,7 @@ namespace FILEWATCHER
                 throw;
             }
 
-            return back;
+            //return back;
         }
 
         /// <summary>
