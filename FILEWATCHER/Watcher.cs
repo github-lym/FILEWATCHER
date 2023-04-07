@@ -235,7 +235,7 @@ namespace FILEWATCHER
                         //        continue;
                         //    }
                         //}
-                        
+
                         t.Text += line + Environment.NewLine;
                         //back += line + Environment.NewLine;
 
@@ -366,7 +366,7 @@ namespace FILEWATCHER
                     }
                     else
                     {
-                        string add = $"robocopy {s} {t} {dirInfo.Name} /NP /NFL /MT:32";
+                        string add = $"robocopy \"{s}\" \"{t}\" \"{dirInfo.Name}\" /NP /NFL /MT:32";
 
                         //var _sbNow = _sb.ToString().Split('\n');
                         //var last = _sbNow.LastOrDefault();
@@ -410,7 +410,7 @@ namespace FILEWATCHER
                     var objj = (Form1)Application.OpenForms["Form1"];
                     string watchPath = objj.M_TEXTBOX.Text.Trim();
                     string t = s.Replace(watchPath, "[TargetPath]");
-                    string add = $"robocopy {s} {t} {dirInfo.Name} /NP /NFL /MT:32";
+                    string add = $"robocopy \"{s}\" \"{t}\" \"{dirInfo.Name}\" /NP /NFL /MT:32";
 
                     //var _sbNow = _sb.ToString().Split('\n');
                     //var last = _sbNow.LastOrDefault();
