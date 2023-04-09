@@ -106,6 +106,7 @@
             this.TB_RESULT.Size = new System.Drawing.Size(580, 210);
             this.TB_RESULT.TabIndex = 9;
             this.TB_RESULT.Text = "";
+            this.TB_RESULT.TextChanged += new System.EventHandler(this.TB_RESULT_TextChanged);
             // 
             // groupBox1
             // 
@@ -113,9 +114,9 @@
             this.groupBox1.Controls.Add(this.M_BTN);
             this.groupBox1.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox1.Location = new System.Drawing.Point(16, 14);
-            this.groupBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox1.Size = new System.Drawing.Size(581, 78);
             this.groupBox1.TabIndex = 11;
             this.groupBox1.TabStop = false;
@@ -126,9 +127,9 @@
             this.groupBox2.Controls.Add(this.S_TEXTBOX);
             this.groupBox2.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox2.Location = new System.Drawing.Point(16, 109);
-            this.groupBox2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox2.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox2.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox2.Size = new System.Drawing.Size(581, 69);
             this.groupBox2.TabIndex = 12;
             this.groupBox2.TabStop = false;
@@ -138,7 +139,7 @@
             // 
             this.Watching_PictureBox.Image = ((System.Drawing.Image)(resources.GetObject("Watching_PictureBox.Image")));
             this.Watching_PictureBox.Location = new System.Drawing.Point(509, 184);
-            this.Watching_PictureBox.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Watching_PictureBox.Margin = new System.Windows.Forms.Padding(4);
             this.Watching_PictureBox.Name = "Watching_PictureBox";
             this.Watching_PictureBox.Size = new System.Drawing.Size(81, 46);
             this.Watching_PictureBox.TabIndex = 14;
@@ -158,7 +159,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(4, 2, 4, 2);
             this.Name = "Form1";
-            this.Text = "File Watcher 20230407";
+            this.Text = "File Watcher 20230409";
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);

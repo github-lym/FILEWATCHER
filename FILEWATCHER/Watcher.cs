@@ -198,15 +198,7 @@ namespace FILEWATCHER
 
                 using (StringReader SR = new StringReader(_nsb.ToString()))
                 {
-                    System.Diagnostics.Process p = new System.Diagnostics.Process();
-                    p.StartInfo.FileName = "cmd.exe";
-                    p.StartInfo.UseShellExecute = false;
-                    p.StartInfo.RedirectStandardInput = true;
-                    p.StartInfo.RedirectStandardOutput = true;
-                    p.StartInfo.RedirectStandardError = true;
-                    p.StartInfo.CreateNoWindow = true;
                     string errMsg = string.Empty;
-
                     string line = string.Empty;
                     int rowNum = 0;
                     //var objj = (Form1)Application.OpenForms["Form1"];
@@ -214,6 +206,14 @@ namespace FILEWATCHER
 
                     while ((line = SR.ReadLine()) != null)
                     {
+                        System.Diagnostics.Process p = new System.Diagnostics.Process();
+                        p.StartInfo.FileName = "cmd.exe";
+                        p.StartInfo.UseShellExecute = false;
+                        p.StartInfo.RedirectStandardInput = true;
+                        p.StartInfo.RedirectStandardOutput = true;
+                        p.StartInfo.RedirectStandardError = true;
+                        p.StartInfo.CreateNoWindow = true;
+
                         //TB_RESULT.Text += line + Environment.NewLine;
                         //Application.DoEvents();
                         if (line.StartsWith("del"))
@@ -246,6 +246,7 @@ namespace FILEWATCHER
                         //returnCode = p.ExitCode;
                         Form1.ActiveForm.Refresh();
                         Thread.Sleep(100);
+                        p.WaitForExit();
 
                         if (!string.IsNullOrWhiteSpace(errMsg))
                         {

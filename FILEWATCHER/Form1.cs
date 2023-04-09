@@ -66,5 +66,11 @@ namespace FILEWATCHER
             //TB_RESULT.Text = _watcher.Replicate();
             _watcher.Replicate();
         }
+
+        private void TB_RESULT_TextChanged(object sender, EventArgs e)
+        {
+            TB_RESULT.SelectionStart = TB_RESULT.TextLength;
+            TB_RESULT.ScrollToCaret();
+        }
     }
 }
