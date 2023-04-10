@@ -202,17 +202,19 @@ namespace FILEWATCHER
                     string line = string.Empty;
                     int rowNum = 0;
                     //var objj = (Form1)Application.OpenForms["Form1"];
+                    Form f = Application.OpenForms["Form1"] as Form;
                     RichTextBox t = Application.OpenForms["Form1"].Controls["TB_RESULT"] as RichTextBox;
+
+                    System.Diagnostics.Process p = new System.Diagnostics.Process();
+                    p.StartInfo.FileName = "cmd.exe";
+                    p.StartInfo.UseShellExecute = false;
+                    p.StartInfo.RedirectStandardInput = true;
+                    p.StartInfo.RedirectStandardOutput = true;
+                    p.StartInfo.RedirectStandardError = true;
+                    p.StartInfo.CreateNoWindow = true;
 
                     while ((line = SR.ReadLine()) != null)
                     {
-                        System.Diagnostics.Process p = new System.Diagnostics.Process();
-                        p.StartInfo.FileName = "cmd.exe";
-                        p.StartInfo.UseShellExecute = false;
-                        p.StartInfo.RedirectStandardInput = true;
-                        p.StartInfo.RedirectStandardOutput = true;
-                        p.StartInfo.RedirectStandardError = true;
-                        p.StartInfo.CreateNoWindow = true;
 
                         //TB_RESULT.Text += line + Environment.NewLine;
                         //Application.DoEvents();
@@ -226,15 +228,6 @@ namespace FILEWATCHER
                                 continue;
                             }
                         }
-                        //if (line.StartsWith("rmdir /S"))
-                        //{
-                        //    string folder = line.Replace("rmdir /S", "").Replace(@"""", "").Trim();
-                        //    if (!Directory.Exists(folder))
-                        //    {
-                        //        back += folder + " 已不存在!" + Environment.NewLine;
-                        //        continue;
-                        //    }
-                        //}
 
                         t.Text += line + Environment.NewLine;
                         //back += line + Environment.NewLine;
@@ -244,9 +237,9 @@ namespace FILEWATCHER
                         p.Start();
                         errMsg = p.StandardError.ReadToEnd();
                         //returnCode = p.ExitCode;
-                        Form1.ActiveForm.Refresh();
+
+                        f.Refresh();
                         Thread.Sleep(100);
-                        p.WaitForExit();
 
                         if (!string.IsNullOrWhiteSpace(errMsg))
                         {
@@ -260,9 +253,10 @@ namespace FILEWATCHER
                             MessageBox.Show(sb.ToString());
                             break;
                         }
-
                         //objj.TB_RESULT.Refresh();
                     }
+
+                    p.WaitForExit();
                 }
                 _sb.Clear();
                 //var objj = (Form1)Application.OpenForms["Form1"];
